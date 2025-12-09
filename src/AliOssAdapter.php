@@ -79,6 +79,51 @@ class AliOssAdapter extends AbstractAdapter
         'Multipart'   => 128
     ];
 
+    // 常用文件类型的MIME映射表
+    // 文件类型映射content-type
+    protected static $mimeMap = [
+        // 图片
+        'jpg'  => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png'  => 'image/png',
+        'gif'  => 'image/gif',
+        'webp' => 'image/webp',
+        'svg'  => 'image/svg+xml',
+        'bmp'  => 'image/bmp',
+        'ico'  => 'image/x-icon',
+        // 文档
+        'pdf'  => 'application/pdf',
+        'doc'  => 'application/msword',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls'  => 'application/vnd.ms-excel',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'ppt'  => 'application/vnd.ms-powerpoint',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'txt'  => 'text/plain',
+        'csv'  => 'text/csv',
+        // 音频/视频
+        'mp3'  => 'audio/mpeg',
+        'mp4'  => 'video/mp4',
+        'webm' => 'video/webm',
+        'ogg'  => 'audio/ogg',
+        'avi'  => 'video/x-msvideo',
+        // 压缩包
+        'zip'  => 'application/zip',
+        'rar'  => 'application/vnd.rar',
+        '7z'   => 'application/x-7z-compressed',
+        'tar'  => 'application/x-tar',
+        'gz'   => 'application/gzip',
+        // 网页与代码
+        'html' => 'text/html',
+        'htm'  => 'text/html',
+        'css'  => 'text/css',
+        'js'   => 'application/javascript',
+        'json' => 'application/json',
+        'xml'  => 'application/xml',
+        // 安卓安装包
+        'apk'  => 'application/vnd.android.package-archive',
+    ];
+
 
     /**
      * AliOssAdapter constructor.
@@ -188,7 +233,9 @@ class AliOssAdapter extends AbstractAdapter
         $options[OssClient::OSS_CHECK_MD5] = true;
 
         if (! isset($options[OssClient::OSS_CONTENT_TYPE])) {
-            $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, '');
+            // $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, '');
+            $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+            $options[OssClient::OSS_CONTENT_TYPE] = self::getContentTypeByExtension($extension);
         }
         try {
             $this->client->uploadFile($this->bucket, $object, $filePath, $options);
@@ -197,6 +244,19 @@ class AliOssAdapter extends AbstractAdapter
             return false;
         }
         return $this->normalizeResponse($options, $path);
+    }
+
+    /**
+     * 通过文件后缀名获取对应的常见MIME类型
+     * @param string $extension 文件后缀名 (如 'jpg', 'pdf')
+     * @return string 对应的Content-Type，未找到则返回通用二进制流类型
+     */
+    public static function getContentTypeByExtension($extension) {
+        // 常用文件类型的MIME映射表
+        // 获取后缀名的小写形式
+        $extLower = strtolower($extension);
+        // 返回对应的MIME类型，如果找不到则返回通用的二进制流类型
+        return self::$mimeMap[$extLower] ?? 'application/octet-stream';
     }
 
     /**
