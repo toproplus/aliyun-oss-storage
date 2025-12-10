@@ -232,11 +232,11 @@ class AliOssAdapter extends AbstractAdapter
 
         $options[OssClient::OSS_CHECK_MD5] = true;
 
-        if (! isset($options[OssClient::OSS_CONTENT_TYPE])) {
-            // $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, '');
-            $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-            $options[OssClient::OSS_CONTENT_TYPE] = self::getContentTypeByExtension($extension);
-        }
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+        $options[OssClient::OSS_CONTENT_TYPE] = self::getContentTypeByExtension($extension, Util::guessMimeType($path, ''));
+        /*if (! isset($options[OssClient::OSS_CONTENT_TYPE])) {
+            $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, '');
+        }*/
         try {
             $this->client->uploadFile($this->bucket, $object, $filePath, $options);
         } catch (OssException $e) {
@@ -251,12 +251,12 @@ class AliOssAdapter extends AbstractAdapter
      * @param string $extension 文件后缀名 (如 'jpg', 'pdf')
      * @return string 对应的Content-Type，未找到则返回通用二进制流类型
      */
-    public static function getContentTypeByExtension($extension) {
+    public static function getContentTypeByExtension($extension, $default = 'application/octet-stream') {
         // 常用文件类型的MIME映射表
         // 获取后缀名的小写形式
         $extLower = strtolower($extension);
         // 返回对应的MIME类型，如果找不到则返回通用的二进制流类型
-        return self::$mimeMap[$extLower] ?? 'application/octet-stream';
+        return self::$mimeMap[$extLower] ?? $default;
     }
 
     /**
