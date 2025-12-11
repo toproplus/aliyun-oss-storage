@@ -12,6 +12,7 @@ use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\AdapterInterface;
 use League\Flysystem\Config;
 use League\Flysystem\Util;
+use OSS\Core\MimeTypes;
 use OSS\Core\OssException;
 use OSS\OssClient;
 use Log;
@@ -197,9 +198,12 @@ class AliOssAdapter extends AbstractAdapter
         if (! isset($options[OssClient::OSS_LENGTH])) {
             $options[OssClient::OSS_LENGTH] = Util::contentSize($contents);
         }
-        if (! isset($options[OssClient::OSS_CONTENT_TYPE])) {
+        $extension = pathinfo($contents, PATHINFO_EXTENSION);
+        $content_type = self::getContentTypeByExtension($extension, MimeTypes::getMimetype($contents));
+        $options[OssClient::OSS_CONTENT_TYPE] = $content_type ?: 'application/octet-stream';
+        /*if (! isset($options[OssClient::OSS_CONTENT_TYPE])) {
             $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, $contents);
-        }
+        }*/
         try {
             $this->client->putObject($this->bucket, $object, $contents, $options);
         } catch (OssException $e) {
@@ -233,9 +237,10 @@ class AliOssAdapter extends AbstractAdapter
         $options[OssClient::OSS_CHECK_MD5] = true;
 
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-        $options[OssClient::OSS_CONTENT_TYPE] = self::getContentTypeByExtension($extension, Util::guessMimeType($path, ''));
+        $content_type = self::getContentTypeByExtension($extension, MimeTypes::getMimetype($filePath));
+        $options[OssClient::OSS_CONTENT_TYPE] = $content_type ?: 'application/octet-stream';
         /*if (! isset($options[OssClient::OSS_CONTENT_TYPE])) {
-            $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, '');
+            $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, $filePath);
         }*/
         try {
             $this->client->uploadFile($this->bucket, $object, $filePath, $options);
