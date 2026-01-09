@@ -395,8 +395,8 @@ class AliOssAdapter extends AbstractAdapter
         if (! isset($options[OssClient::OSS_LENGTH])) {
             $options[OssClient::OSS_LENGTH] = Util::contentSize($contents);
         }
-        $extension = pathinfo($contents, PATHINFO_EXTENSION);
-        $content_type = self::getContentTypeByExtension($extension, MimeTypes::getMimetype($contents));
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $content_type = self::getContentTypeByExtension($extension, MimeTypes::getMimetype($path));
         $options[OssClient::OSS_CONTENT_TYPE] = $content_type ?: 'application/octet-stream';
         /*if (! isset($options[OssClient::OSS_CONTENT_TYPE])) {
             $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, $contents);
@@ -433,8 +433,8 @@ class AliOssAdapter extends AbstractAdapter
 
         $options[OssClient::OSS_CHECK_MD5] = true;
 
-        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-        $content_type = self::getContentTypeByExtension($extension, MimeTypes::getMimetype($filePath));
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $content_type = self::getContentTypeByExtension($extension, MimeTypes::getMimetype($path));
         $options[OssClient::OSS_CONTENT_TYPE] = $content_type ?: 'application/octet-stream';
         /*if (! isset($options[OssClient::OSS_CONTENT_TYPE])) {
             $options[OssClient::OSS_CONTENT_TYPE] = Util::guessMimeType($path, $filePath);
@@ -691,7 +691,11 @@ class AliOssAdapter extends AbstractAdapter
     {
         $object = $this->applyPathPrefix($path);
 
-        return $this->client->doesObjectExist($this->bucket, $object);
+        try {
+           return $this->client->doesObjectExist($this->bucket, $object);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
